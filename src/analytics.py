@@ -5,23 +5,19 @@ import os
 import requests
 
 def get_historical_data(symbol):
-    """ดึงราคาย้อนหลังและตรวจสอบความผิดปกติของ API Response"""
     api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
-    # ใช้ TIME_SERIES_DAILY แทนสำหรับ Free Tier เพื่อความเสถียร
-    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=compact&apikey={api_key}'
+    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}'
     
     response = requests.get(url)
     data = response.json()
+
+    # เช็คว่าโดนบล็อก API Limit หรือไม่
+    if "Note" in data:
+        raise Exception("Alpha Vantage API Limit reached (5 calls/min). Please wait a minute.")
     
-    # ตรวจสอบว่า API ส่งข้อความ Error หรือ Limit Warning มาหรือไม่
-    if "Information" in data or "Note" in data:
-        message = data.get("Information") or data.get("Note")
-        raise Exception(f"Alpha Vantage API Message: {message}")
-        
     if "Time Series (Daily)" not in data:
-        raise Exception(f"Could not find Time Series data for {symbol}. Check if the symbol is correct.")
-    
-    # แปลงข้อมูล
+        raise Exception(f"Unexpected API response: {data.get('Error Message', 'Unknown Error')}")
+
     df = pd.DataFrame.from_dict(data['Time Series (Daily)'], orient='index')
     df = df.astype(float)
     df.index = pd.to_datetime(df.index)
