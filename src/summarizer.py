@@ -2,11 +2,11 @@ import os
 from openai import OpenAI
 
 def generate_alpha_signal(ticker, news, recs, price, atr, factsheet, momentum, stats):
-    """
-    World-class Quant Research Analyst Simulation
-    Focus: Bayesian Inference, Volatility Forecasting, and Alpha Signal Generation.
-    """
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        timeout=60.0,  # เพิ่มเวลาเป็น 60 วินาที
+        max_retries=5   # ให้ลองใหม่ 5 ครั้งถ้าต่อไม่ติด
+    )
     
     # Pre-processing news for the model
     news_string = ""
